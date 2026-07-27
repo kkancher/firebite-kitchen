@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 type OrderItem = {
   id: number;
@@ -124,9 +125,13 @@ export default function OrdersAdminBoard({
     setNotice("");
 
     try {
+      const token = (await supabaseBrowser.auth.getSession()).data.session?.access_token;
       const response = await fetch("/api/orders", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           id: orderId,
           status: draft.status,
@@ -181,7 +186,7 @@ export default function OrdersAdminBoard({
     <>
       {!trackingReady && (
         <section className="surface-panel mt-3.5 p-3.5 sm:p-4.5">
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <p className="rounded-lg border border-[#dbc9ad] bg-[#f4ede2] px-3 py-2 text-sm text-[#6e5b3a]">
             Tracking columns are not yet in your Supabase table. Orders are visible, but status updates are disabled.
             Run the latest SQL migration from supabase/orders_table.sql, then reload this page.
           </p>
@@ -191,13 +196,13 @@ export default function OrdersAdminBoard({
       <section className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <article className="surface-panel p-3.5">
           <p className="text-xs font-bold uppercase tracking-wide text-black/60">Visible Orders</p>
-          <p className="brand-font mt-1 text-[2rem] leading-none text-[#6a5132]">{filteredOrders.length}</p>
+          <p className="brand-font mt-1 text-[1.7rem] leading-none text-[#355076]">{filteredOrders.length}</p>
         </article>
         <article className="surface-panel p-3.5">
           <p className="text-xs font-bold uppercase tracking-wide text-black/60">Visible Revenue</p>
           <div className="mt-1.5 flex items-end gap-1.5">
-            <span className="text-[0.82rem] font-extrabold uppercase tracking-[0.18em] text-[#6a5132]/85">EUR</span>
-            <span className="brand-font bg-gradient-to-r from-[#1f2a30] to-[#6a5132] bg-clip-text text-[2.15rem] leading-none text-transparent [font-variant-numeric:tabular-nums]">
+            <span className="text-[0.74rem] font-extrabold uppercase tracking-[0.18em] text-[#8b7350]/85">EUR</span>
+            <span className="brand-font bg-gradient-to-r from-[#355076] to-[#8b7350] bg-clip-text text-[1.86rem] leading-none text-transparent [font-variant-numeric:tabular-nums]">
               {totalRevenue.toFixed(2)}
             </span>
           </div>
@@ -209,12 +214,12 @@ export default function OrdersAdminBoard({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search order"
-              className="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none"
+              className="rounded-full border border-[#d3c2a8] bg-white px-3 py-2 text-sm outline-none"
             />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as "all" | OrderRecord["order_status"])}
-              className="rounded-full border border-stone-300 bg-white px-3 py-2 text-sm outline-none"
+              className="rounded-full border border-[#d3c2a8] bg-white px-3 py-2 text-sm outline-none"
             >
               <option value="all">All statuses</option>
               {statusOptions.map((status) => (
@@ -227,9 +232,9 @@ export default function OrdersAdminBoard({
         </article>
       </section>
 
-      <section className="surface-panel mt-3.5 p-3.5 sm:p-4.5">
+      <section className="surface-panel section-graphics mt-3.5 p-3.5 sm:p-4.5">
         {notice && (
-          <p className="mb-3 rounded-lg border border-stone-300 bg-[#f3eadc] px-3 py-2 text-sm text-black/75">
+          <p className="mb-3 rounded-lg border border-[#d8c8ae] bg-[#f2ece2] px-3 py-2 text-sm text-black/75">
             {notice}
           </p>
         )}
@@ -245,11 +250,11 @@ export default function OrdersAdminBoard({
               return (
                 <article
                   key={order.id}
-                  className="rounded-xl border border-stone-200 bg-gradient-to-b from-white to-[#f6eee2]/45 p-3.5 shadow-[0_10px_20px_-16px_rgba(56,44,30,0.28)]"
+                  className="rounded-xl border border-[#d8c8ae] bg-gradient-to-b from-white to-[#ece3d5]/55 p-3.5 shadow-[0_10px_20px_-16px_rgba(30,47,73,0.22)]"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="text-[1.15rem] font-semibold leading-tight tracking-tight text-black sm:text-[1.28rem]">
+                      <p className="text-[1.02rem] font-semibold leading-tight tracking-tight text-black sm:text-[1.12rem]">
                         {order.order_id}
                       </p>
                       <p className="text-xs font-semibold uppercase tracking-wide text-black/55">
@@ -261,10 +266,10 @@ export default function OrdersAdminBoard({
                         {draft.status.replaceAll("_", " ")}
                       </span>
                       <div className="mt-1.5 flex items-end gap-1.5 justify-end">
-                        <span className="text-[0.74rem] font-extrabold uppercase tracking-[0.14em] text-[#6a5132]/85">
+                        <span className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-[#8b7350]/85">
                           {order.currency}
                         </span>
-                        <span className="text-[1.45rem] font-black leading-none text-[#6a5132] [font-variant-numeric:tabular-nums]">
+                        <span className="text-[1.22rem] font-black leading-none text-[#355076] [font-variant-numeric:tabular-nums]">
                           {Number(order.total_amount || 0).toFixed(2)}
                         </span>
                       </div>
@@ -283,7 +288,7 @@ export default function OrdersAdminBoard({
                       value={draft.status}
                       onChange={(e) => updateDraft(order.id, { status: e.target.value as Draft["status"] })}
                       disabled={!trackingReady}
-                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm"
+                      className="rounded-lg border border-[#d3c2a8] bg-white px-2.5 py-2 text-sm"
                     >
                       {statusOptions.map((status) => (
                         <option key={status.value} value={status.value}>
@@ -296,7 +301,7 @@ export default function OrdersAdminBoard({
                       onChange={(e) => updateDraft(order.id, { deliveryPartner: e.target.value })}
                       placeholder="Delivery partner"
                       disabled={!trackingReady}
-                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm"
+                      className="rounded-lg border border-[#d3c2a8] bg-white px-2.5 py-2 text-sm"
                     />
                     <input
                       value={draft.estimatedMinutes}
@@ -305,13 +310,13 @@ export default function OrdersAdminBoard({
                       type="number"
                       min={0}
                       disabled={!trackingReady}
-                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm"
+                      className="rounded-lg border border-[#d3c2a8] bg-white px-2.5 py-2 text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => void saveOrder(order.id)}
                       disabled={!trackingReady || savingId === order.id}
-                      className="rounded-lg bg-gradient-to-r from-[#1f2a30] to-[#3a454d] px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#f8f2e8] disabled:opacity-60"
+                      className="rounded-lg bg-gradient-to-r from-[#2d4364] via-[#3a5883] to-[#a98a59] px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#f8f2e8] disabled:opacity-60"
                     >
                       {savingId === order.id ? "Saving..." : "Save"}
                     </button>
@@ -323,7 +328,7 @@ export default function OrdersAdminBoard({
                     placeholder="Tracking note (optional)"
                     rows={2}
                     disabled={!trackingReady}
-                    className="mt-2 w-full rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm"
+                    className="mt-2 w-full rounded-lg border border-[#d3c2a8] bg-white px-2.5 py-2 text-sm"
                   />
 
                   {order.delivered_at && (
@@ -332,7 +337,7 @@ export default function OrdersAdminBoard({
                     </p>
                   )}
 
-                  <div className="mt-2.5 rounded-lg border border-stone-200 bg-[#f3eadc]/70 p-2.5">
+                  <div className="mt-2.5 rounded-lg border border-[#d8c8ae] bg-[#f2ece2]/75 p-2.5">
                     <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-black/60">Items</p>
                     <ul className="space-y-1 text-sm text-black/75">
                       {(order.items || []).map((item, idx) => (

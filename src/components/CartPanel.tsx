@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { useLanguage } from "@/lib/language";
 
 type FormState = {
   customerName: string;
@@ -23,6 +24,8 @@ const initialForm: FormState = {
 };
 
 export default function CartPanel() {
+  const { language } = useLanguage();
+  const isFr = language === "fr";
   const { items, setQty, clear, totalItems, totalAmount } = useCart();
   const { user, isAuthenticated } = useSupabaseUser();
   const [submitting, setSubmitting] = useState(false);
@@ -82,7 +85,14 @@ export default function CartPanel() {
         }),
       });
 
-      const data = (await response.json()) as { message?: string; detail?: string };
+      const data = (await response.json()) as {
+        message?: string;
+        detail?: string;
+        notifications?: {
+          email?: { configured?: boolean; sent?: boolean; error?: string };
+          whatsapp?: { configured?: boolean; sent?: boolean; error?: string };
+        };
+      };
       if (!response.ok) {
         setStatusType("error");
         setStatusMessage(
@@ -91,8 +101,33 @@ export default function CartPanel() {
         return;
       }
 
+      const emailStatus = data.notifications?.email;
+      const whatsappStatus = data.notifications?.whatsapp;
+      const notificationNotes: string[] = [];
+
+      if (emailStatus) {
+        if (emailStatus.sent) {
+          notificationNotes.push("Email confirmation sent.");
+        } else if (emailStatus.error) {
+          notificationNotes.push(`Email: ${emailStatus.error}`);
+        }
+      }
+
+      if (whatsappStatus) {
+        if (whatsappStatus.sent) {
+          notificationNotes.push("WhatsApp confirmation sent.");
+        } else if (whatsappStatus.error) {
+          notificationNotes.push(`WhatsApp: ${whatsappStatus.error}`);
+        }
+      }
+
+      const baseMessage = data.message || "Order submitted successfully.";
       setStatusType("success");
-      setStatusMessage("Order submitted successfully. We will contact you shortly.");
+      setStatusMessage(
+        notificationNotes.length > 0
+          ? `${baseMessage} ${notificationNotes.join(" ")}`
+          : `${baseMessage} We will contact you shortly.`
+      );
       clear();
       setForm(initialForm);
     } catch {
@@ -104,20 +139,20 @@ export default function CartPanel() {
   }
 
   return (
-    <aside className="surface-panel lux-card-hover h-fit p-3.5 sm:p-4 lg:sticky lg:top-28">
-      <div className="mb-3 border-b border-orange-200/70 pb-3">
+    <aside className="surface-panel lux-card-hover h-fit p-3 sm:p-3.5 lg:sticky lg:top-28">
+      <div className="mb-2.5 border-b border-[#dac8ad]/70 pb-2.5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="brand-font text-[2rem] leading-tight text-black">Your Cart</h2>
-            <p className="mt-1 text-[0.82rem] text-black/60">{renderTotalItems} item(s)</p>
+            <h2 className="brand-font text-[1.72rem] leading-tight text-black">{isFr ? "Votre Panier" : "Your Cart"}</h2>
+            <p className="mt-1 text-[0.82rem] text-black/60">{renderTotalItems} {isFr ? "article(s)" : "item(s)"}</p>
           </div>
           {renderItems.length > 0 && (
             <button
               type="button"
               onClick={clear}
-              className="rounded-full border border-orange-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black/65 transition hover:bg-[#ffe9cb]"
+              className="rounded-full border border-[#d7c5aa] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black/65 transition hover:bg-[#ece3d3]"
             >
-              Clear
+              {isFr ? "Vider" : "Clear"}
             </button>
           )}
         </div>
@@ -125,23 +160,23 @@ export default function CartPanel() {
 
       <div className="space-y-2.5">
         {renderItems.length === 0 && (
-          <p className="rounded-lg border border-orange-200/70 bg-[#fff0d7]/70 p-2.5 text-sm text-black/65">
-            Your cart is empty. Add items from the menu.
+          <p className="rounded-lg border border-[#dac8ad]/70 bg-[#f2ece2]/80 p-2.5 text-sm text-black/65">
+            {isFr ? "Votre panier est vide. Ajoutez des plats depuis le menu." : "Your cart is empty. Add items from the menu."}
           </p>
         )}
 
         {renderItems.map((entry) => (
-          <div key={entry.item.id} className="rounded-lg border border-orange-200/70 p-2.5">
+          <div key={entry.item.id} className="rounded-lg border border-[#dac8ad]/70 p-2.5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="brand-font text-[1.45rem] leading-tight text-black">{entry.item.name}</p>
+                <p className="brand-font text-[1.25rem] leading-tight text-black">{entry.item.name}</p>
                 <p className="text-[0.88rem] text-black/65">€{entry.item.price.toFixed(2)} each</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setQty(entry.item.id, entry.qty - 1)}
-                  className="h-7 w-7 rounded-full border border-orange-200 text-sm font-bold leading-none"
+                  className="h-7 w-7 rounded-full border border-[#d3c2a8] text-sm font-bold leading-none"
                 >
                   -
                 </button>
@@ -149,7 +184,7 @@ export default function CartPanel() {
                 <button
                   type="button"
                   onClick={() => setQty(entry.item.id, entry.qty + 1)}
-                  className="h-7 w-7 rounded-full border border-orange-200 text-sm font-bold leading-none"
+                  className="h-7 w-7 rounded-full border border-[#d3c2a8] text-sm font-bold leading-none"
                 >
                   +
                 </button>
@@ -158,17 +193,17 @@ export default function CartPanel() {
           </div>
         ))}
 
-        <div className="rounded-lg border border-orange-200/70 bg-[#ffeccd]/70 p-2.5">
+        <div className="rounded-lg border border-[#dac8ad]/70 bg-[#ece3d5]/85 p-2.5">
           <p className="text-sm text-black/70">Total</p>
-          <p className="text-xl font-extrabold text-[#d85707]">€{renderTotalAmount.toFixed(2)}</p>
+          <p className="text-xl font-extrabold text-[#7e6a48]">€{renderTotalAmount.toFixed(2)}</p>
         </div>
 
-        <div className="rounded-lg border border-orange-200/70 p-2.5">
-          <h3 className="mb-3 text-[1rem] font-bold text-black">Your Details</h3>
+        <div className="rounded-lg border border-[#dac8ad]/70 p-2.5">
+          <h3 className="mb-3 text-[1rem] font-bold text-black">{isFr ? "Vos informations" : "Your Details"}</h3>
 
           {!isAuthenticated && (
             <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Please <Link href="/login" className="font-semibold underline">login</Link> or <Link href="/register" className="font-semibold underline">register</Link> before placing an order.
+              {isFr ? "Veuillez " : "Please "}<Link href="/login" className="font-semibold underline">{isFr ? "vous connecter" : "login"}</Link>{isFr ? " ou " : " or "}<Link href="/register" className="font-semibold underline">{isFr ? "vous inscrire" : "register"}</Link>{isFr ? " avant de passer commande." : " before placing an order."}
             </p>
           )}
 
@@ -176,39 +211,39 @@ export default function CartPanel() {
             <input
               value={form.customerName}
               onChange={(e) => setForm((prev) => ({ ...prev, customerName: e.target.value }))}
-              placeholder="Full Name *"
+              placeholder={isFr ? "Nom complet *" : "Full Name *"}
               autoComplete="name"
-              className="rounded-lg border border-orange-200 px-3 py-2 text-[0.9rem]"
+              className="rounded-lg border border-[#d3c2a8] px-3 py-2 text-[0.86rem]"
             />
             <input
               value={form.phone}
               onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-              placeholder="Phone Number *"
+              placeholder={isFr ? "Numero de telephone *" : "Phone Number *"}
               autoComplete="tel"
-              className="rounded-lg border border-orange-200 px-3 py-2 text-[0.9rem]"
+              className="rounded-lg border border-[#d3c2a8] px-3 py-2 text-[0.86rem]"
             />
             <input
               value={user?.email || form.email}
               onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="Email"
+              placeholder={isFr ? "Email" : "Email"}
               autoComplete="email"
               disabled={Boolean(user?.email)}
-              className="rounded-lg border border-orange-200 px-3 py-2 text-[0.9rem]"
+              className="rounded-lg border border-[#d3c2a8] px-3 py-2 text-[0.86rem]"
             />
             <textarea
               value={form.address}
               onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))}
-              placeholder="Delivery Address *"
+              placeholder={isFr ? "Adresse de livraison *" : "Delivery Address *"}
               autoComplete="street-address"
               rows={3}
-              className="rounded-lg border border-orange-200 px-3 py-2 text-[0.9rem]"
+              className="rounded-lg border border-[#d3c2a8] px-3 py-2 text-[0.86rem]"
             />
             <textarea
               value={form.notes}
               onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-              placeholder="Notes (optional)"
+              placeholder={isFr ? "Notes (optionnel)" : "Notes (optional)"}
               rows={2}
-              className="rounded-lg border border-orange-200 px-3 py-2 text-[0.9rem]"
+              className="rounded-lg border border-[#d3c2a8] px-3 py-2 text-[0.86rem]"
             />
           </div>
         </div>
@@ -228,9 +263,9 @@ export default function CartPanel() {
           type="button"
           disabled={!canSubmit || submitting}
           onClick={submitOrder}
-          className="w-full rounded-full bg-gradient-to-r from-[#ff7a1a] via-[#dd5608] to-[#b54105] px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-[#fff8ef] shadow-[0_14px_22px_-16px_rgba(167,64,7,0.75)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:from-orange-300 disabled:to-orange-300"
+          className="w-full rounded-full bg-gradient-to-r from-[#2d4364] via-[#3a5883] to-[#a98a59] px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-[#fff8ef] shadow-[0_14px_22px_-16px_rgba(31,48,74,0.6)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:from-stone-300 disabled:to-stone-300"
         >
-          {submitting ? "Submitting..." : "Submit Order"}
+          {submitting ? (isFr ? "Envoi..." : "Submitting...") : isFr ? "Valider la commande" : "Submit Order"}
         </button>
       </div>
     </aside>

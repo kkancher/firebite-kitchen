@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { isAdminConfigured, isAdminEmail } from "@/lib/adminAccess";
+import { sendOrderNotifications } from "@/lib/orderNotifications";
 
 type OrderPayload = {
   customer?: {
@@ -35,6 +37,26 @@ type OrderUpdatePayload = {
   trackingNote?: string;
 };
 
+async function getRequestUserEmail(request: Request) {
+  const authHeader = request.headers.get("authorization") || "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
+    : "";
+
+  if (!token) {
+    return { email: null, token: "" };
+  }
+
+  const supabase = getSupabaseServerClient();
+  const { data: userData, error } = await supabase.auth.getUser(token);
+
+  if (error || !userData.user?.email) {
+    return { email: null, token };
+  }
+
+  return { email: userData.user.email.toLowerCase(), token };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawLimit = Number(searchParams.get("limit") || "30");
@@ -45,6 +67,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = getSupabaseServerClient();
+    const { email: requestEmail, token } = await getRequestUserEmail(request);
 
     let query = supabase
       .from("orders")
@@ -55,11 +78,6 @@ export async function GET(request: Request) {
       .limit(limit);
 
     if (customerEmail) {
-      const authHeader = request.headers.get("authorization") || "";
-      const token = authHeader.startsWith("Bearer ")
-        ? authHeader.slice("Bearer ".length).trim()
-        : "";
-
       if (!token) {
         return NextResponse.json(
           { message: "Authentication required to access customer orders." },
@@ -67,15 +85,14 @@ export async function GET(request: Request) {
         );
       }
 
-      const { data: userData, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !userData.user?.email) {
+      if (!requestEmail) {
         return NextResponse.json(
           { message: "Invalid session for customer order lookup." },
           { status: 401 }
         );
       }
 
-      if (userData.user.email.toLowerCase() !== customerEmail) {
+      if (requestEmail !== customerEmail) {
         return NextResponse.json(
           { message: "You can access only your own orders." },
           { status: 403 }
@@ -83,11 +100,69 @@ export async function GET(request: Request) {
       }
 
       query = query.eq("customer_email", customerEmail);
+    } else {
+      if (!token || !requestEmail) {
+        return NextResponse.json(
+          { message: "Authentication required for admin order access." },
+          { status: 401 }
+        );
+      }
+
+      if (!isAdminConfigured()) {
+        return NextResponse.json(
+          {
+            message:
+              "Admin access is not configured. Set ADMIN_EMAILS (comma-separated) or ADMIN_EMAIL in .env.local.",
+          },
+          { status: 403 }
+        );
+      }
+
+      if (!isAdminEmail(requestEmail)) {
+        return NextResponse.json(
+          { message: "You are not allowed to access admin orders." },
+          { status: 403 }
+        );
+      }
     }
 
     const { data, error } = await query;
 
     if (error) {
+      const isMissingTrackingColumns =
+        error.code === "42703" ||
+        error.message.toLowerCase().includes("order_status") ||
+        error.message.toLowerCase().includes("does not exist");
+
+      if (isMissingTrackingColumns) {
+        let legacyQuery = supabase
+          .from("orders")
+          .select(
+            "id, order_id, customer_name, customer_phone, customer_email, customer_address, customer_notes, items, total_amount, currency, created_at"
+          )
+          .order("created_at", { ascending: false })
+          .limit(limit);
+
+        if (customerEmail) {
+          legacyQuery = legacyQuery.eq("customer_email", customerEmail);
+        }
+
+        const legacy = await legacyQuery;
+        if (!legacy.error) {
+          const hydrated = (legacy.data || []).map((row) => ({
+            ...row,
+            order_status: "new",
+            delivery_partner: null,
+            estimated_minutes: null,
+            tracking_note: null,
+            delivered_at: null,
+            updated_at: null,
+          }));
+
+          return NextResponse.json({ orders: hydrated, trackingReady: false });
+        }
+      }
+
       const isRlsIssue =
         error.code === "42501" ||
         error.message.toLowerCase().includes("row-level security") ||
@@ -104,7 +179,7 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json({ orders: data || [] });
+    return NextResponse.json({ orders: data || [], trackingReady: true });
   } catch (error) {
     return NextResponse.json(
       {
@@ -220,14 +295,61 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({
-    message: "Order received.",
+  const customerEmail = sessionEmail || payload.customer?.email || null;
+  const notificationResult = await sendOrderNotifications({
     orderId,
+    customerName: payload.customer?.name?.trim() || "Customer",
+    customerEmail,
+    customerPhone: payload.customer?.phone || null,
+    totalAmount,
+    currency: "EUR",
+    items: payload.items || [],
+  });
+
+  const emailFailed = notificationResult.email.configured && !notificationResult.email.sent;
+  const whatsappFailed =
+    notificationResult.whatsapp.configured && !notificationResult.whatsapp.sent;
+
+  const message =
+    emailFailed || whatsappFailed
+      ? "Order received. Notification delivery is partially pending."
+      : "Order received. Confirmation sent by email and WhatsApp when configured.";
+
+  return NextResponse.json({
+    message,
+    orderId,
+    notifications: notificationResult,
   });
 }
 
 export async function PATCH(request: Request) {
   const payload = (await request.json()) as OrderUpdatePayload;
+
+  const { email: requestEmail, token } = await getRequestUserEmail(request);
+
+  if (!token || !requestEmail) {
+    return NextResponse.json(
+      { message: "Authentication required for admin updates." },
+      { status: 401 }
+    );
+  }
+
+  if (!isAdminConfigured()) {
+    return NextResponse.json(
+      {
+        message:
+          "Admin access is not configured. Set ADMIN_EMAILS (comma-separated) or ADMIN_EMAIL in .env.local.",
+      },
+      { status: 403 }
+    );
+  }
+
+  if (!isAdminEmail(requestEmail)) {
+    return NextResponse.json(
+      { message: "You are not allowed to update orders." },
+      { status: 403 }
+    );
+  }
 
   if (!payload.id || !Number.isFinite(payload.id)) {
     return NextResponse.json(

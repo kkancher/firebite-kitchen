@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { useLanguage } from "@/lib/language";
 
 type OrderItem = {
   id: number;
@@ -51,6 +52,8 @@ const statusClass: Record<OrderRecord["order_status"], string> = {
 };
 
 export default function OrdersPage() {
+  const { language, text } = useLanguage();
+  const isFr = language === "fr";
   const { user, isAuthenticated } = useSupabaseUser();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,15 +108,15 @@ export default function OrdersPage() {
     <>
       <Navbar />
       <main className="site-shell pt-28 pb-7">
-        <section className="surface-panel bg-gradient-to-b from-white to-[#f4ecdf] p-4 sm:p-5">
+        <section className="surface-panel section-graphics fade-up bg-gradient-to-b from-white to-[#ece3d5] p-3.5 sm:p-4.5">
           <div className="flex flex-wrap items-start justify-between gap-2.5">
             <div>
               <p className="eyebrow">Order Tracking</p>
-              <h1 className="brand-font text-[2.15rem] leading-tight text-black sm:text-[2.5rem]">
-                My Orders
+              <h1 className="brand-font text-[1.86rem] leading-tight text-black sm:text-[2.2rem]">
+                {isFr ? "Mes Commandes" : "My Orders"}
               </h1>
               <p className="section-copy mt-1.5">
-                View your own order history and live delivery updates.
+                {isFr ? "Consultez votre historique et les mises a jour de livraison en direct." : "View your own order history and live delivery updates."}
               </p>
             </div>
             <button
@@ -121,9 +124,9 @@ export default function OrdersPage() {
               onClick={() => {
                 if (typeof window !== "undefined") window.location.reload();
               }}
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#1f2a30] to-[#3a454d] px-4 py-2 text-[0.72rem] font-extrabold uppercase tracking-[0.14em] text-[#f9f3e8] shadow-[0_12px_20px_-16px_rgba(21,24,28,0.7)] transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#2d4364] via-[#3a5883] to-[#a98a59] px-4 py-2 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-[#f9f3e8] shadow-[0_12px_20px_-16px_rgba(31,48,74,0.6)] transition-all hover:-translate-y-0.5"
             >
-              Reload
+              {isFr ? "Rafraichir" : "Reload"}
             </button>
           </div>
         </section>
@@ -131,12 +134,12 @@ export default function OrdersPage() {
         {!isAuthenticated ? (
           <section className="surface-panel mt-3.5 p-4">
             <p className="text-sm text-black/70">
-              Please <Link href="/login" className="font-semibold text-orange-700 underline">login</Link> or <Link href="/register" className="font-semibold text-orange-700 underline">register</Link> to view your orders.
+              {isFr ? "Veuillez " : "Please "}<Link href="/login" className="font-semibold text-[#2e476b] underline">{text.nav.login.toLowerCase()}</Link>{isFr ? " ou " : " or "}<Link href="/register" className="font-semibold text-[#2e476b] underline">{text.nav.register.toLowerCase()}</Link>{isFr ? " pour voir vos commandes." : " to view your orders."}
             </p>
           </section>
         ) : loading ? (
           <section className="surface-panel mt-3.5 p-4">
-            <p className="text-sm text-black/70">Loading your orders...</p>
+            <p className="text-sm text-black/70">{isFr ? "Chargement de vos commandes..." : "Loading your orders..."}</p>
           </section>
         ) : message ? (
           <section className="surface-panel mt-3.5 p-4">
@@ -146,36 +149,36 @@ export default function OrdersPage() {
           </section>
         ) : orders.length === 0 ? (
           <section className="surface-panel mt-3.5 p-4">
-            <p className="text-sm text-black/70">No orders found for your account yet.</p>
+            <p className="text-sm text-black/70">{isFr ? "Aucune commande trouvee pour votre compte." : "No orders found for your account yet."}</p>
           </section>
         ) : (
           <>
             <section className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <article className="surface-panel p-3.5">
                 <p className="text-xs font-bold uppercase tracking-wide text-black/60">My Orders</p>
-                <p className="brand-font mt-1 text-[2rem] leading-none text-[#6a5132]">{orders.length}</p>
+                <p className="brand-font mt-1 text-[1.7rem] leading-none text-[#355076]">{orders.length}</p>
               </article>
               <article className="surface-panel p-3.5">
                 <p className="text-xs font-bold uppercase tracking-wide text-black/60">Total Spent</p>
                 <div className="mt-1.5 flex items-end gap-1.5">
-                  <span className="text-[0.82rem] font-extrabold uppercase tracking-[0.18em] text-[#6a5132]/85">EUR</span>
-                  <span className="brand-font bg-gradient-to-r from-[#1f2a30] to-[#6a5132] bg-clip-text text-[2.15rem] leading-none text-transparent [font-variant-numeric:tabular-nums]">
+                  <span className="text-[0.74rem] font-extrabold uppercase tracking-[0.18em] text-[#8b7350]/85">EUR</span>
+                  <span className="brand-font bg-gradient-to-r from-[#355076] to-[#8b7350] bg-clip-text text-[1.86rem] leading-none text-transparent [font-variant-numeric:tabular-nums]">
                     {totalSpent.toFixed(2)}
                   </span>
                 </div>
               </article>
             </section>
 
-            <section className="surface-panel mt-3.5 p-3.5 sm:p-4.5">
+            <section className="surface-panel section-graphics mt-3.5 p-3.5 sm:p-4.5">
               <div className="space-y-3">
                 {orders.map((order) => (
                   <article
                     key={order.id}
-                    className="rounded-xl border border-stone-200 bg-gradient-to-b from-white to-[#f6eee2]/45 p-3.5 shadow-[0_10px_20px_-16px_rgba(56,44,30,0.28)]"
+                    className="rounded-xl border border-[#d8c8ae] bg-gradient-to-b from-white to-[#ece3d5]/55 p-3.5 shadow-[0_10px_20px_-16px_rgba(30,47,73,0.22)]"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <p className="text-[1.15rem] font-semibold leading-tight tracking-tight text-black sm:text-[1.28rem]">
+                        <p className="text-[1.02rem] font-semibold leading-tight tracking-tight text-black sm:text-[1.12rem]">
                           {order.order_id}
                         </p>
                         <p className="text-xs font-semibold uppercase tracking-wide text-black/55">
@@ -187,10 +190,10 @@ export default function OrdersPage() {
                           {order.order_status.replaceAll("_", " ")}
                         </span>
                         <div className="mt-1.5 flex items-end gap-1.5 justify-end">
-                          <span className="text-[0.74rem] font-extrabold uppercase tracking-[0.14em] text-[#6a5132]/85">
+                          <span className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-[#8b7350]/85">
                             {order.currency}
                           </span>
-                          <span className="text-[1.45rem] font-black leading-none text-[#6a5132] [font-variant-numeric:tabular-nums]">
+                          <span className="text-[1.22rem] font-black leading-none text-[#355076] [font-variant-numeric:tabular-nums]">
                             {Number(order.total_amount || 0).toFixed(2)}
                           </span>
                         </div>
@@ -208,7 +211,7 @@ export default function OrdersPage() {
                     </div>
 
                     {order.tracking_note && (
-                      <p className="mt-2 rounded-lg border border-stone-200 bg-[#f3eadf]/70 px-2.5 py-2 text-sm text-black/75">
+                      <p className="mt-2 rounded-lg border border-[#d8c8ae] bg-[#f2ece2]/75 px-2.5 py-2 text-sm text-black/75">
                         <span className="font-bold text-black">Update:</span> {order.tracking_note}
                       </p>
                     )}

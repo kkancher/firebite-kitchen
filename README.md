@@ -55,3 +55,31 @@ After setup, submitted checkout orders are inserted into `public.orders`.
 3. Paste and run the full script from `supabase/orders_table.sql`.
 4. Confirm table exists in Table Editor: `public.orders`.
 5. Submit an order from the app and verify a row appears in `public.orders`.
+
+## Confirmation Notifications (Email + WhatsApp)
+
+Order confirmations are triggered from [src/app/api/orders/route.ts](src/app/api/orders/route.ts) after a successful database insert.
+
+### Email via Resend
+
+Set these variables in .env.local:
+
+- RESEND_API_KEY
+- ORDER_FROM_EMAIL (or FROM_EMAIL) (verified sender, for example orders@yourdomain.com)
+- Optional local fallback: RESEND_TLS_INSECURE=true (use only for local debugging when TLS interception breaks Node fetch)
+
+### WhatsApp via Twilio
+
+Set these variables in .env.local:
+
+- TWILIO_ACCOUNT_SID
+- TWILIO_AUTH_TOKEN
+- TWILIO_WHATSAPP_FROM (for example whatsapp:+14155238886)
+
+Customer phone numbers should include country code (for example +33...).
+
+### Behavior
+
+- Order is always saved first.
+- Notification sending is attempted after save.
+- If provider credentials are missing, order still succeeds and notification channel is marked not configured.

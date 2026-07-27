@@ -7,6 +7,7 @@ export type MenuItem = {
   emoji: string;
   image?: string;
   spicy?: boolean;
+  veg?: boolean;
 };
 
 export const menuItems: MenuItem[] = [
@@ -28,6 +29,7 @@ export const menuItems: MenuItem[] = [
     price: 9.99,
     emoji: "🍳",
     image: "/egg-fried-rice.png",
+    veg: true,
   },
   {
     id: 3,
@@ -47,6 +49,7 @@ export const menuItems: MenuItem[] = [
     price: 4.99,
     emoji: "🍟",
     image: "/french-fries.png",
+    veg: true,
   },
   {
     id: 5,
@@ -56,6 +59,7 @@ export const menuItems: MenuItem[] = [
     price: 5.99,
     emoji: "🟤",
     image: "/gulab-jamun.png",
+    veg: true,
   },
   {
     id: 6,

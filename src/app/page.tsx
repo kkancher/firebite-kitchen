@@ -1,70 +1,82 @@
+"use client";
+
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import BrandLogo from "@/components/BrandLogo";
 import MenuAndCheckout from "@/components/MenuAndCheckout";
 import WelcomeNote from "@/components/WelcomeNote";
+import { useLanguage } from "@/lib/language";
 
 export default function Home() {
+  const { text } = useLanguage();
+
   return (
     <>
       <Navbar />
-      <main>
-        <section id="home" className="site-shell pt-28 pb-10 scroll-mt-28">
-          <div className="grid items-center gap-6 lg:grid-cols-2">
+      <main className="relative pb-4">
+        <div className="lux-orb lux-orb-a left-[-4rem] top-24" />
+        <div className="lux-orb lux-orb-b right-[-3rem] top-[26rem]" />
+        <div className="ambience-line left-[-12rem] top-28" />
+        <div className="ambience-line ambience-line-b right-[-10rem] top-40" />
+
+        <section id="home" className="site-shell section-graphics pt-24 pb-10 scroll-mt-28">
+          <div className="surface-panel px-4 py-5 sm:px-6 sm:py-6">
+            <div className="relative z-[1] grid items-center gap-6 lg:grid-cols-[1.06fr_0.94fr]">
             <div>
-              <p className="eyebrow fade-up">Story with every bite</p>
-              <h1 className="fade-up fade-delay-1 section-title text-[2.35rem] sm:text-5xl md:text-[3.6rem]">
-                Luxury street-style food, cooked fresh daily.
+              <p className="eyebrow fade-up">{text.hero.eyebrow}</p>
+              <h1 className="fade-up fade-delay-1 section-title text-[1.92rem] sm:text-[2.36rem] md:text-[2.76rem]">
+                {text.hero.title}
               </h1>
-              <p className="fade-up fade-delay-2 mt-4 max-w-xl text-[0.98rem] leading-relaxed text-black/72">
-                Flame-grilled flavors from the heart of FireBite Kitchen. Rich, smoky, and crafted to arrive hot and unforgettable.
+              <p className="fade-up fade-delay-2 mt-3 max-w-xl text-[0.92rem] leading-relaxed text-black/72">
+                {text.hero.subtitle}
               </p>
               <WelcomeNote />
-              <div className="fade-up fade-delay-3 mt-6 flex flex-wrap gap-3">
+              <div className="fade-up fade-delay-3 mt-5 flex flex-wrap gap-2.5">
                 <Link href="/#menu" className="btn-primary">
-                  Shop Now
+                  {text.nav.shopNow}
                 </Link>
                 <Link href="/about" className="btn-secondary">
-                  Our Story
+                  {text.hero.ourStory}
                 </Link>
               </div>
 
-              <div className="mt-4 grid max-w-xl grid-cols-3 gap-2 text-center text-xs">
-                <div className="lux-card-hover rounded-xl border border-orange-200 bg-white/85 px-3 py-2.5 shadow-[0_10px_20px_-18px_rgba(154,60,9,0.4)]">
+              <div className="mt-3.5 grid max-w-xl grid-cols-3 gap-2 text-center text-xs">
+                <div className="lux-card-hover rounded-xl border border-[#ddc8a4] bg-white/92 px-3 py-2 shadow-[0_14px_24px_-20px_rgba(30,47,73,0.3)]">
                   <p className="brand-font text-xl text-black">2 Hrs</p>
-                  <p className="text-black/55">Fast delivery</p>
+                  <p className="text-black/55">{text.hero.fastDelivery}</p>
                 </div>
-                <div className="lux-card-hover rounded-xl border border-orange-200 bg-white/85 px-3 py-2.5 shadow-[0_10px_20px_-18px_rgba(154,60,9,0.4)]">
+                <div className="lux-card-hover rounded-xl border border-[#ddc8a4] bg-white/92 px-3 py-2 shadow-[0_14px_24px_-20px_rgba(30,47,73,0.3)]">
                   <p className="brand-font text-xl text-black">100%</p>
-                  <p className="text-black/55">Fresh batches</p>
+                  <p className="text-black/55">{text.hero.freshBatches}</p>
                 </div>
-                <div className="lux-card-hover rounded-xl border border-orange-200 bg-white/85 px-3 py-2.5 shadow-[0_10px_20px_-18px_rgba(154,60,9,0.4)]">
+                <div className="lux-card-hover rounded-xl border border-[#ddc8a4] bg-white/92 px-3 py-2 shadow-[0_14px_24px_-20px_rgba(30,47,73,0.3)]">
                   <p className="brand-font text-xl text-black">4.9</p>
-                  <p className="text-black/55">Average rating</p>
+                  <p className="text-black/55">{text.hero.avgRating}</p>
                 </div>
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-sm">
-              <div className="absolute -inset-4 rounded-[2rem] border-2 border-orange-200 bg-gradient-to-br from-[#ffe9ca] via-transparent to-[#ffd7a5]" />
-              <div className="absolute -right-4 -top-4 rounded-full bg-gradient-to-r from-[#e66b13] to-[#bb4105] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#fff1de] shadow">
-                FireBite Signature
+            <div className="relative mx-auto w-full max-w-sm lg:justify-self-end">
+              <div className="absolute -inset-4 rounded-[2rem] border-2 border-[#dcc8a9] bg-gradient-to-br from-[#f8f0e3] via-transparent to-[#ecdcc3]" />
+              <div className="absolute -right-4 -top-4 rounded-full bg-gradient-to-r from-[#274269] to-[#c39b5e] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#fbefdd] shadow">
+                Maison Signature
               </div>
-              <div className="lux-card-hover relative overflow-hidden rounded-[2rem] border border-orange-200 bg-white/95 p-3.5 shadow-[0_24px_38px_-24px_rgba(164,63,8,0.45)]">
+              <div className="lux-card-hover relative overflow-hidden rounded-[2rem] border border-[#dcc7a7] bg-white/96 p-3 shadow-[0_26px_40px_-24px_rgba(30,47,73,0.34)]">
                 <BrandLogo />
               </div>
             </div>
           </div>
+          </div>
         </section>
 
-        <section className="site-shell pb-6">
-          <div className="surface-panel pulse-gold px-4 py-4 md:px-5 md:py-5">
+        <section className="site-shell pb-5">
+          <div className="surface-panel section-graphics pulse-gold px-4 py-4 md:px-5 md:py-5">
             <div className="fade-up text-center">
-              <p className="eyebrow">Elevating flavor craftsmanship</p>
-              <h2 className="section-title text-[2rem] sm:text-[2.35rem]">Premium ingredients, exceptional taste</h2>
+              <p className="eyebrow">{text.hero.craftsmanship}</p>
+              <h2 className="section-title text-[1.55rem] sm:text-[1.86rem]">{text.hero.premiumTitle}</h2>
             </div>
-            <div className="mt-4 grid gap-2.5 md:grid-cols-3">
+            <div className="mt-3.5 grid gap-2 md:grid-cols-3">
               {[
                 {
                   no: "I",
@@ -84,12 +96,12 @@ export default function Home() {
               ].map((feature, idx) => (
                 <article
                   key={feature.no}
-                  className="reveal-card lux-card-hover rounded-xl border border-orange-200 bg-gradient-to-b from-white to-[#ffeac8] p-3 shadow-[0_12px_22px_-18px_rgba(155,60,9,0.35)]"
+                  className="reveal-card lux-card-hover rounded-xl border border-[#dcc8a8] bg-gradient-to-b from-white to-[#efe3d0] p-3 shadow-[0_14px_26px_-20px_rgba(30,47,73,0.26)]"
                   style={{ ["--reveal-delay" as string]: `${120 + idx * 90}ms` }}
                 >
-                  <p className="brand-font text-[1.65rem] leading-none text-[#cc5608]">{feature.no}</p>
-                  <h3 className="mt-1 text-[1.6rem] font-semibold leading-tight text-black">{feature.title}</h3>
-                  <p className="mt-1.5 text-[0.95rem] leading-relaxed text-black/65">{feature.copy}</p>
+                  <p className="brand-font text-[1.35rem] leading-none text-[#355076]">{feature.no}</p>
+                  <h3 className="mt-1 text-[1.35rem] font-semibold leading-tight text-black">{feature.title}</h3>
+                  <p className="mt-1.5 text-[0.88rem] leading-relaxed text-black/65">{feature.copy}</p>
                 </article>
               ))}
             </div>
@@ -99,13 +111,13 @@ export default function Home() {
         <MenuAndCheckout />
 
         <section className="site-shell pb-3">
-          <div className="surface-panel fade-up bg-gradient-to-r from-[#ffe2ba] via-[#fff2de] to-[#ffdcb0] p-4 text-center sm:p-5">
-            <h3 className="section-title text-gold-gradient text-[1.9rem] sm:text-[2.35rem]">Ready for your next favorite meal?</h3>
+          <div className="surface-panel section-graphics fade-up bg-gradient-to-r from-[#efe3d1] via-[#fcf6ec] to-[#e9d9bf] p-4 text-center sm:p-5">
+            <h3 className="section-title text-gold-gradient text-[1.7rem] sm:text-[2rem]">{text.hero.ctaTitle}</h3>
             <p className="mx-auto mt-3 max-w-2xl text-black/70">
-              Browse the menu and pick your perfect balance of spice, comfort, and sweetness.
+              {text.hero.ctaCopy}
             </p>
             <Link href="/#menu" className="btn-primary float-gentle mt-4">
-              Start Ordering
+              {text.hero.startOrdering}
             </Link>
           </div>
         </section>

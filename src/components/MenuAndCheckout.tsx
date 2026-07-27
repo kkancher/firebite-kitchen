@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import MenuCard from "@/components/MenuCard";
 import CartPanel from "@/components/CartPanel";
 import { categories, menuItems } from "@/data/menu";
+import { useLanguage } from "@/lib/language";
 
 export default function MenuAndCheckout() {
+  const { text } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"popular" | "price-low" | "price-high">(
@@ -36,11 +38,11 @@ export default function MenuAndCheckout() {
 
   return (
     <section id="menu" className="site-shell pb-8 scroll-mt-28">
-      <div className="surface-panel fade-up p-4 text-center sm:p-5">
+      <div className="surface-panel section-graphics fade-up p-3.5 text-center sm:p-4.5">
         <p className="eyebrow pulse-gold">Menu</p>
-        <h2 className="brand-font text-[1.95rem] leading-tight text-black sm:text-[2.25rem]">Handcrafted dishes for every craving</h2>
-        <div className="mx-auto mt-3 h-px w-14 bg-orange-300" />
-        <p className="section-copy mx-auto">Filter by category and order directly below.</p>
+        <h2 className="brand-font text-[1.72rem] leading-tight text-black sm:text-[2.05rem]">{text.menu.title}</h2>
+        <div className="mx-auto mt-2.5 h-px w-14 bg-[#c9b090]" />
+        <p className="section-copy mx-auto">{text.menu.subtitle}</p>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -48,10 +50,10 @@ export default function MenuAndCheckout() {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] transition-all ${
+            className={`rounded-full px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-all ${
               activeCategory === cat
-                ? "bg-gradient-to-r from-[#ff7b1b] to-[#c24806] text-[#fff3e4] shadow-[0_10px_22px_-12px_rgba(168,64,7,0.86)]"
-                : "border border-orange-200 bg-white/80 text-black/80 hover:-translate-y-0.5 hover:bg-[#ffe9cb]"
+                ? "bg-gradient-to-r from-[#26456f] to-[#c39b5e] text-[#faf0de] shadow-[0_12px_24px_-14px_rgba(31,48,74,0.56)]"
+                : "border border-[#dcc8a6] bg-white/85 text-black/80 hover:-translate-y-0.5 hover:bg-[#f0e4cf]"
             }`}
           >
             {cat}
@@ -66,8 +68,8 @@ export default function MenuAndCheckout() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search dishes, category..."
-            className="w-full rounded-xl border border-stone-300 bg-white/90 px-3 py-2 text-sm text-black outline-none transition focus:border-[#9f835f]"
+            placeholder={text.menu.search}
+            className="w-full rounded-xl border border-[#d8c3a2] bg-white/92 px-3 py-2 text-sm text-black outline-none transition focus:border-[#a78659]"
           />
         </label>
         <label className="relative">
@@ -75,17 +77,17 @@ export default function MenuAndCheckout() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "popular" | "price-low" | "price-high")}
-            className="w-full rounded-xl border border-stone-300 bg-white/90 px-3 py-2 text-sm text-black outline-none transition focus:border-[#9f835f]"
+            className="w-full rounded-xl border border-[#d8c3a2] bg-white/92 px-3 py-2 text-sm text-black outline-none transition focus:border-[#a78659]"
           >
-            <option value="popular">Sort: Popular</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
+            <option value="popular">{text.menu.sortPopular}</option>
+            <option value="price-low">{text.menu.sortLow}</option>
+            <option value="price-high">{text.menu.sortHigh}</option>
           </select>
         </label>
       </div>
 
       <p className="mt-2 text-xs font-semibold uppercase tracking-[0.11em] text-black/55">
-        Showing {filtered.length} item{filtered.length === 1 ? "" : "s"}
+        {text.menu.showing} {filtered.length} {filtered.length === 1 ? text.menu.item : text.menu.items}
       </p>
 
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">

@@ -1,9 +1,13 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import OrdersAdminBoard from "@/components/OrdersAdminBoard";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
-
-export const dynamic = "force-dynamic";
+import { useSupabaseUser } from "@/hooks/useSupabaseUser";
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { useLanguage } from "@/lib/language";
 
 type OrderItem = {
   id: number;
@@ -32,112 +36,91 @@ type OrderRecord = {
   updated_at: string | null;
 };
 
-async function loadOrders() {
-  try {
-    const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("orders")
-      .select(
-        "id, order_id, customer_name, customer_phone, customer_email, customer_address, customer_notes, items, total_amount, currency, order_status, delivery_partner, estimated_minutes, tracking_note, delivered_at, created_at, updated_at"
-      )
-      .order("created_at", { ascending: false })
-      .limit(100);
+export default function AdminPage() {
+  const { language } = useLanguage();
+  const isFr = language === "fr";
+  const { user, isAuthenticated } = useSupabaseUser();
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [trackingReady, setTrackingReady] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    if (error) {
-      const isMissingTrackingColumns =
-        error.code === "42703" ||
-        error.message.toLowerCase().includes("order_status") ||
-        error.message.toLowerCase().includes("does not exist");
-
-      if (isMissingTrackingColumns) {
-        const legacy = await supabase
-          .from("orders")
-          .select(
-            "id, order_id, customer_name, customer_phone, customer_email, customer_address, customer_notes, items, total_amount, currency, created_at"
-          )
-          .order("created_at", { ascending: false })
-          .limit(100);
-
-        if (legacy.error) {
-          return {
-            orders: [] as OrderRecord[],
-            error: `Unable to load orders: ${legacy.error.message}`,
-            trackingReady: false,
-          };
-        }
-
-        const hydrated = (legacy.data || []).map((row) => ({
-          ...row,
-          order_status: "new" as const,
-          delivery_partner: null,
-          estimated_minutes: null,
-          tracking_note: null,
-          delivered_at: null,
-          updated_at: null,
-        })) as OrderRecord[];
-
-        return {
-          orders: hydrated,
-          error: "",
-          trackingReady: false,
-        };
+  useEffect(() => {
+    async function loadAdminOrders() {
+      if (!isAuthenticated) {
+        setOrders([]);
+        setError("");
+        setLoading(false);
+        return;
       }
 
-      return {
-        orders: [] as OrderRecord[],
-        error:
-          error.code === "42501"
-            ? "Reading orders is blocked by Supabase permissions. Add SUPABASE_SERVICE_ROLE_KEY in .env.local for admin reads."
-            : `Unable to load orders: ${error.message}`,
-        trackingReady: false,
+      setLoading(true);
+      setError("");
+
+      const token = (await supabaseBrowser.auth.getSession()).data.session?.access_token;
+      const response = await fetch("/api/orders?limit=100", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as {
+        orders?: OrderRecord[];
+        trackingReady?: boolean;
+        message?: string;
+        detail?: string;
       };
+
+      if (!response.ok) {
+        setOrders([]);
+        setTrackingReady(false);
+        setError(data.detail ? `${data.message || "Unable to load admin orders."} (${data.detail})` : data.message || "Unable to load admin orders.");
+        setLoading(false);
+        return;
+      }
+
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
+      setTrackingReady(data.trackingReady !== false);
+      setLoading(false);
     }
 
-    return {
-      orders: (data || []) as OrderRecord[],
-      error: "",
-      trackingReady: true,
-    };
-  } catch (error) {
-    return {
-      orders: [] as OrderRecord[],
-      error:
-        error instanceof Error
-          ? `Unable to load orders: ${error.message}`
-          : "Unable to load orders.",
-      trackingReady: false,
-    };
-  }
-}
-
-export default async function AdminPage() {
-  const { orders, error, trackingReady } = await loadOrders();
+    void loadAdminOrders();
+  }, [isAuthenticated, user?.email]);
 
   return (
     <>
       <Navbar />
       <main className="site-shell pt-28 pb-7">
-        <section className="surface-panel bg-gradient-to-b from-white to-[#f4ecdf] p-4 sm:p-5">
+        <section className="surface-panel section-graphics fade-up bg-gradient-to-b from-white to-[#ece3d5] p-3.5 sm:p-4.5">
           <div className="flex flex-wrap items-start justify-between gap-2.5">
             <div>
               <p className="eyebrow">Admin</p>
-              <h1 className="brand-font text-[2.15rem] leading-tight text-black sm:text-[2.5rem]">
-                Order Operations Center
+              <h1 className="brand-font text-[1.86rem] leading-tight text-black sm:text-[2.2rem]">
+                {isFr ? "Centre des operations" : "Order Operations Center"}
               </h1>
               <p className="section-copy mt-1.5">
-                Track order progress, assign delivery, update ETA, and complete delivery lifecycle.
+                {isFr ? "Suivez les commandes, assignez la livraison, mettez a jour l'ETA et finalisez le cycle de livraison." : "Track order progress, assign delivery, update ETA, and complete delivery lifecycle."}
               </p>
             </div>
             <a
               href="/admin"
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#1f2a30] to-[#3a454d] px-4 py-2 text-[0.72rem] font-extrabold uppercase tracking-[0.14em] text-[#f9f3e8] shadow-[0_12px_20px_-16px_rgba(21,24,28,0.7)] transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#2d4364] via-[#3a5883] to-[#a98a59] px-4 py-2 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-[#f9f3e8] shadow-[0_12px_20px_-16px_rgba(31,48,74,0.6)] transition-all hover:-translate-y-0.5"
             >
-              Reload Board
+              {isFr ? "Rafraichir" : "Reload Board"}
             </a>
           </div>
         </section>
 
-        {error ? (
+        {!isAuthenticated ? (
+          <section className="surface-panel mt-3.5 p-4">
+            <p className="text-sm text-black/70">
+              {isFr ? "Veuillez " : "Please "}<Link href="/login" className="font-semibold text-[#2e476b] underline">{isFr ? "vous connecter" : "login"}</Link>{isFr ? " avec un compte admin pour acceder a cette page." : " with an admin account to access this page."}
+            </p>
+          </section>
+        ) : loading ? (
+          <section className="surface-panel mt-3.5 p-4">
+            <p className="text-sm text-black/70">{isFr ? "Verification de l'acces admin et chargement..." : "Checking admin access and loading orders..."}</p>
+          </section>
+        ) : error ? (
           <section className="surface-panel mt-3.5 p-4">
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {error}

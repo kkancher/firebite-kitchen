@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
+import { Mulish, Prata } from "next/font/google";
 import "./globals.css";
 
-const bodyFont = Plus_Jakarta_Sans({
+const bodyFont = Mulish({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-body",
 });
 
-const displayFont = Cormorant_Garamond({
+const displayFont = Prata({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400"],
   variable: "--font-display",
 });
 
