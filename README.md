@@ -34,3 +34,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Supabase Order Storage Setup
+
+This project stores submitted orders in Supabase via `src/app/api/orders/route.ts`.
+
+1. Copy `.env.example` to `.env.local` and fill:
+	- `SUPABASE_URL`
+	- `SUPABASE_SERVICE_ROLE_KEY`
+
+2. In Supabase SQL Editor, run:
+	- `supabase/orders_table.sql`
+
+After setup, submitted checkout orders are inserted into `public.orders`.
+
+### First-time setup checklist
+
+1. Open Supabase Project Dashboard.
+2. Go to SQL Editor.
+3. Paste and run the full script from `supabase/orders_table.sql`.
+4. Confirm table exists in Table Editor: `public.orders`.
+5. Submit an order from the app and verify a row appears in `public.orders`.
